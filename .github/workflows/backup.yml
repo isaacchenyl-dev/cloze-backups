@@ -8,11 +8,14 @@ on:
 permissions:
   contents: write          # needed to commit the backup
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # silences the Node 20 deprecation
+
 jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: supabase/setup-cli@v1
         with:
