@@ -1,0 +1,34 @@
+name: Weekly database backup
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'   # every Sunday 03:00 UTC
+  workflow_dispatch: {}    # also lets you run it manually
+
+permissions:
+  contents: write          # needed to commit the backup
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Dump database
+        run: |
+          DIR="backups/$(date +%F)"
+          mkdir -p "$DIR"
+          supabase db dump --db-url "${{ secrets.SUPABASE_DB_URL }}" -f "$DIR/schema.sql"
+          supabase db dump --db-url "${{ secrets.SUPABASE_DB_URL }}" --data-only -f "$DIR/data.sql"
+
+      - name: Commit backup
+        run: |
+          git config user.name  "backup-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add backups/
+          git commit -m "Backup $(date +%F)" || echo "Nothing changed"
+          git push
